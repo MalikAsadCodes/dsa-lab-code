@@ -39,7 +39,7 @@ struct func
     void ddisplayBack(node *f, node *r);
     int dcount(node *f, node *r);
     int dsearch(node *f, node *r, int x);
-    void dreverse(node *f, node *r);
+    void dreverse(node *&f, node *&r);
     int splitDeque(node *head, node *f, node *r, node *&h1, node *&f1, node *&r1, node *&h2, node *&f2, node *&r2);
     void devenOdd(node *f, node *r, node *eh, node *&evF, node *&evR, node *oh, node *&odF, node *&odR);
     void dnextGreater(node *f, node *r);

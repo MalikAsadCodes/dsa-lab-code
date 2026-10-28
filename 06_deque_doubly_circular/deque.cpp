@@ -237,19 +237,48 @@ int func::dsearch(node *f, node *r, int x)
     return 0;
 }
 
-// ---------- Reverse (swap values from both ends) ----------
-void func::dreverse(node *f, node *r)
+// ---------- Reverse (turn the links, no data is moved) ----------
+void func::dreverse(node *&f, node *&r)
 {
-    int n = dcount(f, r);
-    node *a = f;            // walks forward from front
-    node *b = r;            // walks backward from rear
-    for (int i = 0; i < n / 2; i++)
+    // Check 1: empty deque
+    if (f == NULL)
     {
-        int t = a->data;
-        a->data = b->data;
-        b->data = t;
-        a = a->next;
-        b = b->prev;        // one step back, no search needed
+        cout << "Deque is empty" << endl;
+        return;
+    }
+
+    // Check 2: one value, nothing to reverse
+    if (f == r)
+        return;
+
+    int n = dcount(f, r);   // values in the deque
+    node *a = r->next;      // first free node after the rear
+    node *b = f->prev;      // last free node before the front
+
+    // turn the next and prev link of every node from front to rear
+    node *p = f;
+    node *q;
+    for (int i = 0; i < n; i++)
+    {
+        q = p->next;        // remember the old next
+        p->next = p->prev;
+        p->prev = q;
+        p = q;
+    }
+
+    // the old rear is the new front, the old front is the new rear
+    node *t = f;
+    f = r;
+    r = t;
+
+    // Check 3: a == r means the deque filled the whole ring, nothing to join
+    // otherwise join both ends to the free nodes again
+    if (a != r)
+    {
+        f->prev = b;
+        b->next = f;
+        r->next = a;
+        a->prev = r;
     }
 }
 
@@ -597,8 +626,13 @@ void func::dequeMenu()
             break;
 
         case 9:
-            dreverse(f, r);
-            cout << "Deque " << dcur + 1 << ": ";
+            if (f == NULL)
+            {
+                cout << "Deque is empty, insert some values first" << endl;
+                break;
+            }
+            dreverse(f, r);         // f and r are references, so the new front and rear are kept
+            cout << "Reversed deque " << dcur + 1 << ": ";
             ddisplay(f, r);
             break;
 
