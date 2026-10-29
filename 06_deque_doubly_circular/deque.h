@@ -16,7 +16,7 @@ struct node
 
 struct func
 {
-    int maxsize = 6;    // nodes in every deque
+    int maxsize = 10;   // nodes in every deque
 
     // ----- deques: deque i uses dhead[i], dfront[i], drear[i] -----
     node *dhead[MAXS] = {NULL};
@@ -40,6 +40,8 @@ struct func
     int dcount(node *f, node *r);
     int dsearch(node *f, node *r, int x);
     void dreverse(node *&f, node *&r);
+
+    // ----- lab questions Q1 to Q10 -----
     int splitDeque(node *head, node *f, node *r, node *&h1, node *&f1, node *&r1, node *&h2, node *&f2, node *&r2);
     void devenOdd(node *f, node *r, node *eh, node *&evF, node *&evR, node *oh, node *&odF, node *&odR);
     void dnextGreater(node *f, node *r);
@@ -49,6 +51,16 @@ struct func
     int disBalanced(string s);
     void dremoveDuplicates(node *head, node *&f, node *&r);
     void dintersection(node *f1, node *r1, node *f2, node *r2, node *rh, node *&rf, node *&rr);
+
+    // ----- group questions: each one makes a NEW deque, the original is not changed -----
+    // the int ones return 1 when the new deque is made, 0 when the input is wrong
+    int dreversePairs(node *f, node *r, int k, node *&nh, node *&nf, node *&nr);
+    int dsumPairs(node *f, node *r, int k, node *&nh, node *&nf, node *&nr);
+    int dmaxMinPairs(node *f, node *r, int k, node *&bh, node *&bf, node *&br, node *&sh, node *&sf, node *&sr);
+    void ddeleteGreater(node *f, node *r, node *&nh, node *&nf, node *&nr);
+
+    // ----- pairs with a given sum (only prints, nothing is changed) -----
+    void dfindPairs(node *f, node *r, int sum);
 
     // ----- menus -----
     void dequeMenu();

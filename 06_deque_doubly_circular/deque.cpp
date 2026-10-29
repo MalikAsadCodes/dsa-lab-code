@@ -284,7 +284,7 @@ void func::dreverse(node *&f, node *&r)
 
 // ---------- Deque Q1: split into two deques ----------
 // Copy the base deque into a new ring, then cut that ring in two.
-// The first half gets k = (m + 1) / 2 nodes, the second half the rest (m = nodes of the base ring).
+// The first half gets k = (n + 1) / 2 values, the second half the rest (n = values of the base deque).
 // Returns 0 when the base ring has fewer than 2 nodes and cannot be split.
 int func::splitDeque(node *head, node *f, node *r, node *&h1, node *&f1, node *&r1, node *&h2, node *&f2, node *&r2)
 {
@@ -309,7 +309,7 @@ int func::splitDeque(node *head, node *f, node *r, node *&h1, node *&f1, node *&
     node *last = c->prev;
 
     // mid = the k-th node, the first half ends there
-    int k = (m + 1) / 2;
+    int k = (n + 1) / 2;        // half of the VALUES, rounded up
     node *mid = c;
     for (int i = 1; i < k; i++)
         mid = mid->next;
@@ -526,6 +526,253 @@ void func::dintersection(node *f1, node *r1, node *f2, node *r2, node *rh, node 
 }
 
 // =====================================================
+// ===== GROUP QUESTIONS (each one makes a NEW deque) ===
+// =====================================================
+// These functions only READ the selected deque (f, r), so the original never changes.
+// The result goes into a NEW deque that the function builds itself with createList.
+// They return 1 when the new deque is made, 0 when the input is wrong (then nothing is made).
+// A group is k values in a row. Values left at the end that do not make a full group:
+// reverse and sum keep them as they are, max and min leave them out.
+
+// ---------- Reverse in groups of k (new deque) ----------
+// Example, k = 3: 1 2 3 4 5 6 7 8 gives 3 2 1 6 5 4 7 8
+// For every group: go to its last node, then walk BACK with prev and insert each value
+// at the rear of the new deque. The leftover values are inserted as they are.
+int func::dreversePairs(node *f, node *r, int k, node *&nh, node *&nf, node *&nr)
+{
+    int n = dcount(f, r);   // values in the original deque
+
+    // Check 1: empty deque
+    if (n == 0)
+    {
+        cout << "Deque is empty, insert some values first" << endl;
+        return 0;
+    }
+
+    // Check 2: the group size must be from 1 to n
+    if (k < 1 || k > n)
+    {
+        cout << "Size must be from 1 to " << n << endl;
+        return 0;
+    }
+
+    // the new, empty deque
+    createList(nh);
+    nf = NULL;
+    nr = NULL;
+
+    int groups = n / k;     // full groups only
+    int left = n % k;       // values that do not make a full group
+    node *p = f;            // first node of the current group (p only reads the original)
+    node *e;                // last node of the current group
+    node *t;                // walks the group backward
+
+    for (int g = 0; g < groups; g++)
+    {
+        // e goes to the last node of the group
+        e = p;
+        for (int i = 1; i < k; i++)
+            e = e->next;
+
+        // copy the group backward: last value first
+        t = e;
+        for (int i = 0; i < k; i++)
+        {
+            dpushRear(nh, nf, nr, t->data);
+            t = t->prev;
+        }
+
+        p = e->next;        // the next group starts after e
+    }
+
+    // the leftover values are copied as they are
+    for (int i = 0; i < left; i++)
+    {
+        dpushRear(nh, nf, nr, p->data);
+        p = p->next;
+    }
+    return 1;
+}
+
+// ---------- Sum of every group of k (new deque) ----------
+// Example, k = 3: 1 2 3 4 5 6 7 8 gives 6 15 7 8
+int func::dsumPairs(node *f, node *r, int k, node *&nh, node *&nf, node *&nr)
+{
+    int n = dcount(f, r);   // values in the original deque
+
+    // Check 1: empty deque
+    if (n == 0)
+    {
+        cout << "Deque is empty, insert some values first" << endl;
+        return 0;
+    }
+
+    // Check 2: the group size must be from 1 to n
+    if (k < 1 || k > n)
+    {
+        cout << "Size must be from 1 to " << n << endl;
+        return 0;
+    }
+
+    // the new, empty deque
+    createList(nh);
+    nf = NULL;
+    nr = NULL;
+
+    int groups = n / k;     // full groups only
+    int left = n % k;       // values that do not make a full group
+    int sum;
+    node *p = f;            // p only reads the original
+
+    for (int g = 0; g < groups; g++)
+    {
+        sum = 0;
+        for (int i = 0; i < k; i++)
+        {
+            sum = sum + p->data;
+            p = p->next;
+        }
+        dpushRear(nh, nf, nr, sum);     // one sum for every group
+    }
+    for (int i = 0; i < left; i++)
+    {
+        dpushRear(nh, nf, nr, p->data); // leftover values stay as they are
+        p = p->next;
+    }
+    return 1;
+}
+
+// ---------- Maximum and minimum of every group of k (2 new deques) ----------
+// (bh, bf, br) gets the maximum of every group, (sh, sf, sr) gets the minimum.
+// Values that do not make a full group are left out.
+// Example, k = 3: 4 9 1 7 2 8 5 gives maximums 9 8 and minimums 1 2 (5 is left out)
+int func::dmaxMinPairs(node *f, node *r, int k, node *&bh, node *&bf, node *&br, node *&sh, node *&sf, node *&sr)
+{
+    int n = dcount(f, r);   // values in the original deque
+
+    // Check 1: empty deque
+    if (n == 0)
+    {
+        cout << "Deque is empty, insert some values first" << endl;
+        return 0;
+    }
+
+    // Check 2: the group size must be from 1 to n
+    if (k < 1 || k > n)
+    {
+        cout << "Size must be from 1 to " << n << endl;
+        return 0;
+    }
+
+    // the two new, empty deques
+    createList(bh);
+    bf = NULL;
+    br = NULL;
+    createList(sh);
+    sf = NULL;
+    sr = NULL;
+
+    int groups = n / k;     // full groups only, the leftover values are not used
+    int big;
+    int small;
+    node *p = f;            // p only reads the original
+
+    for (int g = 0; g < groups; g++)
+    {
+        big = p->data;      // start with the first value of the group
+        small = p->data;
+        for (int i = 0; i < k; i++)
+        {
+            if (p->data > big)
+                big = p->data;
+            if (p->data < small)
+                small = p->data;
+            p = p->next;
+        }
+        dpushRear(bh, bf, br, big);
+        dpushRear(sh, sf, sr, small);
+    }
+    return 1;
+}
+
+// ---------- Delete greater (new deque) ----------
+// A value is deleted when the value right after it (in the original deque) is greater.
+// The last value always stays. Every value is checked once.
+// Example: 6 7 5 4 2 1 3 gives 7 5 4 2 3, and 12 15 10 11 5 6 2 3 gives 15 11 6 3
+// The original is copied into the new deque. Every value is taken from the FRONT
+// and put back at the REAR only if it stays.
+void func::ddeleteGreater(node *f, node *r, node *&nh, node *&nf, node *&nr)
+{
+    // Check 1: empty deque
+    if (f == NULL)
+    {
+        cout << "Deque is empty, insert some values first" << endl;
+        return;
+    }
+
+    // the new deque starts as a copy of the original
+    createList(nh);
+    copyDeque(f, r, nh, nf, nr);
+
+    int n = dcount(nf, nr);             // values in the new deque
+
+    for (int i = 1; i <= n; i++)
+    {
+        int x = dpopFront(nh, nf, nr);  // take the front value out, its next value is now the front
+
+        // keep x if it is the last value, or if the value after it is not greater
+        if (i == n || nf->data <= x)
+            dpushRear(nh, nf, nr, x);
+    }
+}
+
+// ---------- Find every pair of values whose sum is equal to the given sum ----------
+// Only prints, nothing is changed and no deque is made.
+// Brute force, works on an unsorted deque: every value is added to every value after it.
+// Example: 1 2 4 5 7 9 and sum 9 prints 2 + 7 and 4 + 5
+void func::dfindPairs(node *f, node *r, int sum)
+{
+    int n = dcount(f, r);   // values in the deque
+
+    // Check 1: empty deque
+    if (n == 0)
+    {
+        cout << "Deque is empty, insert some values first" << endl;
+        return;
+    }
+
+    // Check 2: a pair needs at least two values
+    if (n < 2)
+    {
+        cout << "Need at least 2 values to make a pair" << endl;
+        return;
+    }
+
+    int found = 0;          // how many pairs were found
+    node *p = f;            // first value of the pair
+    node *q;                // second value of the pair
+
+    for (int i = 0; i < n - 1; i++)
+    {
+        q = p->next;        // the second value is always after the first
+        for (int j = i + 1; j < n; j++)
+        {
+            if (p->data + q->data == sum)
+            {
+                cout << p->data << " + " << q->data << " = " << sum << endl;
+                found++;
+            }
+            q = q->next;
+        }
+        p = p->next;
+    }
+
+    // Check 3: no pair gave this sum
+    if (found == 0)
+        cout << "No pair adds up to " << sum << endl;
+}
+
+// =====================================================
 // ====================== MENUS ========================
 // =====================================================
 
@@ -562,6 +809,11 @@ void func::dequeMenu()
         cout << "19. Create a new deque" << endl;
         cout << "20. Select a deque" << endl;
         cout << "21. Show all deques" << endl;
+        cout << "22. Reverse in groups of k (adds 1 new deque)" << endl;
+        cout << "23. Sum of every group of k (adds 1 new deque)" << endl;
+        cout << "24. Max and min of every group of k (adds 2 new deques)" << endl;
+        cout << "25. Delete greater (adds 1 new deque)" << endl;
+        cout << "26. Find all pairs with a given sum" << endl;
         cout << "0. Exit" << endl;
         cout << "Choice: ";
         cin >> ch;
@@ -874,6 +1126,121 @@ void func::dequeMenu()
                 ddisplay(dfront[i], drear[i]);
             }
             break;
+
+        case 22:
+        {
+            if (f == NULL)
+            {
+                cout << "Deque is empty, insert some values first" << endl;
+                break;
+            }
+            if (dnum + 1 > MAXS)
+            {
+                cout << "No room for another deque" << endl;
+                break;
+            }
+            int k = 0;
+            cout << "Group size: ";
+            cin >> k;
+            int c = dnum;               // the result goes in a new deque at the end of the array
+            if (dreversePairs(f, r, k, dhead[c], dfront[c], drear[c]) == 0)
+                break;                  // wrong size, no deque was made
+            dnum++;
+
+            cout << "Original (deque " << dcur + 1 << "): ";
+            ddisplay(f, r);
+            cout << "Reversed in groups of " << k << " (deque " << c + 1 << "): ";
+            ddisplay(dfront[c], drear[c]);
+            break;
+        }
+
+        case 23:
+        {
+            if (f == NULL)
+            {
+                cout << "Deque is empty, insert some values first" << endl;
+                break;
+            }
+            if (dnum + 1 > MAXS)
+            {
+                cout << "No room for another deque" << endl;
+                break;
+            }
+            int k = 0;
+            cout << "Group size: ";
+            cin >> k;
+            int c = dnum;               // the result goes in a new deque at the end of the array
+            if (dsumPairs(f, r, k, dhead[c], dfront[c], drear[c]) == 0)
+                break;                  // wrong size, no deque was made
+            dnum++;
+
+            cout << "Original (deque " << dcur + 1 << "): ";
+            ddisplay(f, r);
+            cout << "Sums of groups of " << k << " (deque " << c + 1 << "): ";
+            ddisplay(dfront[c], drear[c]);
+            break;
+        }
+
+        case 24:
+        {
+            if (f == NULL)
+            {
+                cout << "Deque is empty, insert some values first" << endl;
+                break;
+            }
+            if (dnum + 2 > MAXS)
+            {
+                cout << "No room for two more deques" << endl;
+                break;
+            }
+            int k = 0;
+            cout << "Group size: ";
+            cin >> k;
+            int mx = dnum, mn = dnum + 1;       // mx gets the maximums, mn the minimums
+            if (dmaxMinPairs(f, r, k, dhead[mx], dfront[mx], drear[mx], dhead[mn], dfront[mn], drear[mn]) == 0)
+                break;                          // wrong size, no deque was made
+            dnum += 2;
+
+            cout << "Original (deque " << dcur + 1 << "): ";
+            ddisplay(f, r);
+            cout << "Maximums (deque " << mx + 1 << "): ";
+            ddisplay(dfront[mx], drear[mx]);
+            cout << "Minimums (deque " << mn + 1 << "): ";
+            ddisplay(dfront[mn], drear[mn]);
+            break;
+        }
+
+        case 25:
+        {
+            if (f == NULL)
+            {
+                cout << "Deque is empty, insert some values first" << endl;
+                break;
+            }
+            if (dnum + 1 > MAXS)
+            {
+                cout << "No room for another deque" << endl;
+                break;
+            }
+            int c = dnum;               // the result goes in a new deque at the end of the array
+            ddeleteGreater(f, r, dhead[c], dfront[c], drear[c]);
+            dnum++;
+
+            cout << "Original (deque " << dcur + 1 << "): ";
+            ddisplay(f, r);
+            cout << "After delete greater (deque " << c + 1 << "): ";
+            ddisplay(dfront[c], drear[c]);
+            break;
+        }
+
+        case 26:
+        {
+            int sum = 0;
+            cout << "Sum to find: ";
+            cin >> sum;
+            dfindPairs(f, r, sum);
+            break;
+        }
 
         case 0:
             break;
