@@ -11,6 +11,7 @@ void func::menu()
     int ch = 0;
     all[0] = new arrayDS;
     all[1] = new singlyList;
+    all[2] = new singlyCircular;
     // the next days add the other structures here
 
     do
@@ -1347,6 +1348,313 @@ void singlyList::menu()
                 cout << "List " << i + 1 << ": ";
                 displayList(head[i]);
             }
+            break;
+
+        case 0:
+            break;
+
+        default:
+            cout << "Wrong choice" << endl;
+        }
+    } while (ch != 0);
+}
+
+// =====================================================
+// =========== 3. SINGLY CIRCULAR LINKED LIST ==========
+// =====================================================
+// One list of student records, kept in ALPHABETIC order of name.
+// The last node's next is head (circular). prev is not used here.
+// Empty list: head == NULL. One record: head->next == head.
+
+// ---------- Display one record ----------
+void singlyCircular::displayRecord(student *p)
+{
+    cout << "Roll no: " << p->rollno << "  Name: " << p->name;
+    cout << "  Marks: " << p->marks[0] << " " << p->marks[1] << " " << p->marks[2] << endl;
+}
+
+// ---------- Insert a record (virtual, alphabetic order of name) ----------
+void singlyCircular::insert()
+{
+    int roll = 0;
+    cout << "Roll no: ";
+    cin >> roll;
+
+    // Check 1: the roll number must not be in the list already
+    if (head != NULL)
+    {
+        student *p = head;
+        do
+        {
+            if (p->rollno == roll)
+            {
+                cout << "Roll no " << roll << " already exists" << endl;
+                return;
+            }
+            p = p->next;
+        } while (p != head);
+    }
+
+    student *t = new student;
+    t->rollno = roll;
+    cout << "Name (one word): ";
+    cin >> t->name;
+    for (int i = 0; i < 3; i++)
+    {
+        cout << "Marks of subject " << i + 1 << " (0 to 100): ";
+        cin >> t->marks[i];
+        // Check 2: marks must be from 0 to 100
+        if (t->marks[i] < 0 || t->marks[i] > 100)
+        {
+            cout << "Marks must be from 0 to 100, record not added" << endl;
+            delete t;
+            return;
+        }
+    }
+
+    // Check 3: empty list, the new node points to itself
+    if (head == NULL)
+    {
+        t->next = t;
+        head = t;
+        return;
+    }
+
+    // Check 4: the new name comes before the first name: insert at the beginning
+    if (t->name < head->name)
+    {
+        student *last = head;
+        while (last->next != head)      // last goes to the last node
+            last = last->next;
+        t->next = head;
+        last->next = t;                 // last node -> new first node
+        head = t;
+        return;
+    }
+
+    // p stops at the last node whose name is not after the new name
+    student *p = head;
+    while (p->next != head && p->next->name <= t->name)
+        p = p->next;
+    t->next = p->next;
+    p->next = t;
+}
+
+// ---------- Delete a record by name (virtual) ----------
+void singlyCircular::del()
+{
+    string x;
+
+    // Check 1: list is empty
+    if (head == NULL)
+    {
+        cout << "List Underflow" << endl;
+        return;
+    }
+
+    cout << "Name to delete: ";
+    cin >> x;
+
+    student *b = head;          // b = node before p, it starts at the last node
+    while (b->next != head)
+        b = b->next;
+    student *p = head;
+
+    // go once round the circle until the name is found
+    do
+    {
+        if (p->name == x)
+            break;
+        b = p;
+        p = p->next;
+    } while (p != head);
+
+    // Check 2: back at head and the name is not there
+    if (p->name != x)
+    {
+        cout << x << " not found" << endl;
+        return;
+    }
+
+    // Check 3: only one record, the list becomes empty
+    if (p->next == p)
+        head = NULL;
+    else
+    {
+        b->next = p->next;      // jump over p
+        if (p == head)          // the first record is deleted, the next one is first now
+            head = p->next;
+    }
+    delete p;
+    cout << "Record of " << x << " deleted" << endl;
+}
+
+// ---------- Display a record by roll number (virtual search) ----------
+void singlyCircular::search()
+{
+    int roll = 0;
+
+    // Check 1: list is empty
+    if (head == NULL)
+    {
+        cout << "List is empty, insert some records first" << endl;
+        return;
+    }
+
+    cout << "Roll no to search: ";
+    cin >> roll;
+    student *p = head;
+    do
+    {
+        if (p->rollno == roll)
+        {
+            displayRecord(p);
+            return;
+        }
+        p = p->next;
+    } while (p != head);
+    cout << "Roll no " << roll << " not found" << endl;
+}
+
+// ---------- Turn every next link back (circular) ----------
+void singlyCircular::reverseList(student *&h)
+{
+    student *b = h;             // node before p, it starts at the last node
+    while (b->next != h)
+        b = b->next;
+
+    student *p = h;
+    student *q;
+    do
+    {
+        q = p->next;            // remember the next node
+        p->next = b;            // turn the link back
+        b = p;
+        p = q;
+    } while (p != h);
+    h = b;                      // the old last node is the first node
+}
+
+// ---------- Reverse (virtual, display only) ----------
+// The list is reversed and displayed, then reversed again,
+// so it always stays in alphabetic order.
+void singlyCircular::reverse()
+{
+    // Check 1: list is empty
+    if (head == NULL)
+    {
+        cout << "List is empty, insert some records first" << endl;
+        return;
+    }
+
+    reverseList(head);
+    cout << "Reverse order:" << endl;
+    display();
+    reverseList(head);          // put it back in alphabetic order
+}
+
+// ---------- Count (virtual) ----------
+void singlyCircular::count()
+{
+    int c = 0;
+    if (head != NULL)
+    {
+        student *p = head;
+        do
+        {
+            c++;
+            p = p->next;
+        } while (p != head);
+    }
+    cout << "Records: " << c << endl;
+}
+
+// ---------- Display all records (virtual) ----------
+void singlyCircular::display()
+{
+    if (head == NULL)
+    {
+        cout << "List is empty" << endl;
+        return;
+    }
+    student *p = head;
+    do                          // do...while, so the first record is printed too
+    {
+        displayRecord(p);
+        p = p->next;
+    } while (p != head);
+}
+
+// ---------- Q9: display result (roll no, name, total, percentage) ----------
+void singlyCircular::displayResult(student *h)
+{
+    // Check 1: list is empty
+    if (h == NULL)
+    {
+        cout << "List is empty, insert some records first" << endl;
+        return;
+    }
+
+    int total;
+    student *p = h;
+    do
+    {
+        total = p->marks[0] + p->marks[1] + p->marks[2];
+        cout << "Roll no: " << p->rollno << "  Name: " << p->name;
+        cout << "  Total: " << total << "/300";
+        cout << "  Percentage: " << total * 100.0 / 300 << "%" << endl;
+        p = p->next;
+    } while (p != h);
+}
+
+// ---------- Singly circular list menu ----------
+void singlyCircular::menu()
+{
+    int ch = 0;
+    do
+    {
+        cout << "\n--- SINGLY CIRCULAR LINKED LIST (student records) ---" << endl;
+        cout << "1. Insert record (alphabetic order of name)" << endl;
+        cout << "2. Delete record by name" << endl;
+        cout << "3. Display record by roll no (search)" << endl;
+        cout << "4. Reverse (display only)" << endl;
+        cout << "5. Count" << endl;
+        cout << "6. Display all records" << endl;
+        cout << "7. Q9 Display result (total, percentage)" << endl;
+        cout << "0. Back to main menu" << endl;
+        cout << "Choice: ";
+        cin >> ch;
+
+        switch (ch)
+        {
+        case 1:
+            insert();
+            display();
+            break;
+
+        case 2:
+            del();
+            display();
+            break;
+
+        case 3:
+            search();
+            break;
+
+        case 4:
+            reverse();
+            break;
+
+        case 5:
+            count();
+            break;
+
+        case 6:
+            display();
+            break;
+
+        case 7:
+            displayResult(head);
             break;
 
         case 0:

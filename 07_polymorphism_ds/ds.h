@@ -120,6 +120,31 @@ struct singlyList : public ds
 };
 
 // =====================================================
+// 3. SINGLY CIRCULAR LINKED LIST of student records (Q9)
+// records stay in alphabetic order of name, the last node's next is head
+// =====================================================
+struct singlyCircular : public ds
+{
+    student *head = NULL;
+
+    // ----- the 7 virtual functions -----
+    void insert();      // insert a record in alphabetic order
+    void del();         // delete a record by name
+    void search();      // display a record by roll number
+    void reverse();     // display in reverse order, then put the list back
+    void count();
+    void display();
+    void menu();
+
+    // ----- basic functions -----
+    void displayRecord(student *p);
+    void reverseList(student *&h);
+
+    // ----- Q9 -----
+    void displayResult(student *h);
+};
+
+// =====================================================
 // MAIN MENU: all[i] is a BASE pointer to one derived struct
 // =====================================================
 struct func
