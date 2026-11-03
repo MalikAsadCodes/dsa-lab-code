@@ -12,6 +12,7 @@ void func::menu()
     all[0] = new arrayDS;
     all[1] = new singlyList;
     all[2] = new singlyCircular;
+    all[3] = new doublyList;
     // the next days add the other structures here
 
     do
@@ -1655,6 +1656,599 @@ void singlyCircular::menu()
 
         case 7:
             displayResult(head);
+            break;
+
+        case 0:
+            break;
+
+        default:
+            cout << "Wrong choice" << endl;
+        }
+    } while (ch != 0);
+}
+
+// =====================================================
+// ================ 4. DOUBLY LINKED LIST ==============
+// =====================================================
+// List i starts at head[i]. Every node has next (after) and prev (before).
+// The first node's prev is NULL, the last node's next is NULL.
+
+// ---------- Insert at beginning ----------
+void doublyList::insertBeg(node *&h, int x)
+{
+    node *t = new node;
+    t->data = x;
+    t->prev = NULL;         // nothing before the first node
+    t->next = h;
+    if (h != NULL)          // old first node points back to the new node
+        h->prev = t;
+    h = t;
+}
+
+// ---------- Insert at position (the caller checks pos is from 1 to count + 1) ----------
+void doublyList::insertPos(node *&h, int pos, int x)
+{
+    // Check 1: position 1 is the beginning
+    if (pos == 1)
+    {
+        insertBeg(h, x);
+        return;
+    }
+
+    node *p = h;
+    // p goes to the node before the position
+    for (int i = 1; i < pos - 1; i++)
+        p = p->next;
+
+    node *t = new node;
+    t->data = x;
+    t->next = p->next;
+    t->prev = p;
+    if (p->next != NULL)    // the node after t points back to t
+        p->next->prev = t;
+    p->next = t;
+}
+
+// ---------- Insert at end ----------
+void doublyList::insertEnd(node *&h, int x)
+{
+    node *t = new node;
+    t->data = x;
+    t->next = NULL;         // the new node is the last node
+
+    // Check 1: empty list, the new node is the first node
+    if (h == NULL)
+    {
+        t->prev = NULL;
+        h = t;
+        return;
+    }
+
+    node *p = h;
+    while (p->next != NULL)     // p goes to the last node
+        p = p->next;
+    p->next = t;
+    t->prev = p;
+}
+
+// ---------- Delete from beginning (the caller checks the list is not empty) ----------
+int doublyList::delBeg(node *&h)
+{
+    node *p = h;
+    int x = p->data;
+    h = h->next;            // the second node is the first node now
+    if (h != NULL)
+        h->prev = NULL;
+    delete p;
+    return x;
+}
+
+// ---------- Delete at position (the caller checks pos is from 1 to count) ----------
+int doublyList::delPos(node *&h, int pos)
+{
+    // Check 1: position 1 is the beginning
+    if (pos == 1)
+        return delBeg(h);
+
+    node *p = h;
+    // p goes to the node at the position
+    for (int i = 1; i < pos; i++)
+        p = p->next;
+
+    int x = p->data;
+    p->prev->next = p->next;        // the node before p jumps over p
+    if (p->next != NULL)            // the node after p points back over p
+        p->next->prev = p->prev;
+    delete p;
+    return x;
+}
+
+// ---------- Delete from end (the caller checks the list is not empty) ----------
+int doublyList::delEnd(node *&h)
+{
+    int x;
+
+    // Check 1: only one node, the list becomes empty
+    if (h->next == NULL)
+    {
+        x = h->data;
+        delete h;
+        h = NULL;
+        return x;
+    }
+
+    node *p = h;
+    while (p->next != NULL)     // p goes to the last node
+        p = p->next;
+
+    x = p->data;
+    p->prev->next = NULL;       // the second-last node is the last node now
+    delete p;
+    return x;
+}
+
+// ---------- Delete by value (first one found) ----------
+// Returns 1 when x is deleted, 0 when x is not in the list.
+int doublyList::delValue(node *&h, int x)
+{
+    node *p = h;
+    while (p != NULL && p->data != x)
+        p = p->next;
+
+    // Check 1: end of list reached, x is not found
+    if (p == NULL)
+        return 0;
+
+    // Check 2: x is in the first node
+    if (p == h)
+    {
+        delBeg(h);
+        return 1;
+    }
+
+    p->prev->next = p->next;
+    if (p->next != NULL)
+        p->next->prev = p->prev;
+    delete p;
+    return 1;
+}
+
+// ---------- Count any list ----------
+int doublyList::countList(node *h)
+{
+    int c = 0;
+    node *p = h;
+    while (p != NULL)
+    {
+        c++;
+        p = p->next;
+    }
+    return c;
+}
+
+// ---------- Display any list (first to last, using next) ----------
+void doublyList::displayList(node *h)
+{
+    if (h == NULL)
+    {
+        cout << "empty" << endl;
+        return;
+    }
+    node *p = h;
+    while (p != NULL)
+    {
+        cout << p->data << " ";
+        p = p->next;
+    }
+    cout << endl;
+}
+
+// ---------- Display backward (last to first, using prev) ----------
+void doublyList::displayBack(node *h)
+{
+    if (h == NULL)
+    {
+        cout << "empty" << endl;
+        return;
+    }
+    node *p = h;
+    while (p->next != NULL)     // p goes to the last node
+        p = p->next;
+    while (p != NULL)           // then walks back with prev
+    {
+        cout << p->data << " ";
+        p = p->prev;
+    }
+    cout << endl;
+}
+
+// ---------- Insert (virtual: beginning / position / end) ----------
+void doublyList::insert()
+{
+    node *&h = head[cur];   // head of the selected list
+    int c = 0, pos = 0, x = 0;
+
+    cout << "1. At beginning  2. At position  3. At end" << endl;
+    cout << "Choice: ";
+    cin >> c;
+
+    // Check 1: wrong choice
+    if (c < 1 || c > 3)
+    {
+        cout << "Wrong choice" << endl;
+        return;
+    }
+
+    if (c == 2)
+    {
+        cout << "Position (1 to " << countList(h) + 1 << "): ";
+        cin >> pos;
+        // Check 2: position must be from 1 to count + 1
+        if (pos < 1 || pos > countList(h) + 1)
+        {
+            cout << "Wrong position" << endl;
+            return;
+        }
+    }
+
+    cout << "Value: ";
+    cin >> x;
+    if (c == 1)
+        insertBeg(h, x);
+    else if (c == 2)
+        insertPos(h, pos, x);
+    else
+        insertEnd(h, x);
+}
+
+// ---------- Delete (virtual: beginning / position / end / by value) ----------
+void doublyList::del()
+{
+    node *&h = head[cur];
+    int c = 0, pos = 0, x = 0;
+
+    // Check 1: list is empty
+    if (h == NULL)
+    {
+        cout << "List Underflow" << endl;
+        return;
+    }
+
+    cout << "1. From beginning  2. From position  3. From end  4. By value" << endl;
+    cout << "Choice: ";
+    cin >> c;
+
+    switch (c)
+    {
+    case 1:
+        cout << "Deleted: " << delBeg(h) << endl;
+        break;
+
+    case 2:
+        cout << "Position (1 to " << countList(h) << "): ";
+        cin >> pos;
+        // Check 2: position must be from 1 to count
+        if (pos < 1 || pos > countList(h))
+            cout << "Wrong position" << endl;
+        else
+            cout << "Deleted: " << delPos(h, pos) << endl;
+        break;
+
+    case 3:
+        cout << "Deleted: " << delEnd(h) << endl;
+        break;
+
+    case 4:
+        cout << "Value: ";
+        cin >> x;
+        if (delValue(h, x) == 1)
+            cout << x << " deleted" << endl;
+        else
+            cout << x << " not found" << endl;
+        break;
+
+    default:
+        cout << "Wrong choice" << endl;
+    }
+}
+
+// ---------- Search (virtual) ----------
+void doublyList::search()
+{
+    int x = 0, pos = 1;
+
+    // Check 1: list is empty
+    if (head[cur] == NULL)
+    {
+        cout << "List is empty, insert some values first" << endl;
+        return;
+    }
+
+    cout << "Value to search: ";
+    cin >> x;
+    node *p = head[cur];
+    while (p != NULL)
+    {
+        if (p->data == x)
+        {
+            cout << x << " found at position " << pos << endl;
+            return;
+        }
+        p = p->next;
+        pos++;
+    }
+    cout << x << " not found" << endl;
+}
+
+// ---------- Reverse (virtual: swap next and prev of every node) ----------
+void doublyList::reverse()
+{
+    node *&h = head[cur];
+
+    // Check 1: list is empty
+    if (h == NULL)
+    {
+        cout << "List is empty, insert some values first" << endl;
+        return;
+    }
+
+    node *p = h;
+    node *t;
+    while (p != NULL)
+    {
+        t = p->next;        // remember the old next
+        p->next = p->prev;  // swap the two links
+        p->prev = t;
+        h = p;              // the last node turned is the new first node
+        p = t;
+    }
+}
+
+// ---------- Count (virtual) ----------
+void doublyList::count()
+{
+    cout << "Count: " << countList(head[cur]) << endl;
+}
+
+// ---------- Display (virtual) ----------
+void doublyList::display()
+{
+    cout << "List " << cur + 1 << ": ";
+    displayList(head[cur]);
+}
+
+// ---------- Count occurrences of x ----------
+int doublyList::countOccur(node *h, int x)
+{
+    int c = 0;
+    node *p = h;
+    while (p != NULL)
+    {
+        if (p->data == x)
+            c++;
+        p = p->next;
+    }
+    return c;
+}
+
+// ---------- Largest, smallest, total and average ----------
+void doublyList::maxMinTotal(node *h)
+{
+    // Check 1: list is empty
+    if (h == NULL)
+    {
+        cout << "List is empty, insert some values first" << endl;
+        return;
+    }
+
+    int big = h->data;      // start with the first value
+    int small = h->data;
+    int total = 0;
+    int c = 0;              // values in the list, for the average
+    node *p = h;
+    while (p != NULL)
+    {
+        if (p->data > big)
+            big = p->data;
+        if (p->data < small)
+            small = p->data;
+        total = total + p->data;
+        c++;
+        p = p->next;
+    }
+    double avg = (double)total / c;     // double, so 7 / 2 gives 3.5
+
+    cout << "Largest: " << big << endl;
+    cout << "Smallest: " << small << endl;
+    cout << "Total: " << total << endl;
+    cout << "Average: " << avg << endl;
+}
+
+// ---------- Merge two sorted lists into a third sorted list ----------
+// The two lists do not change. A value that is in both goes in only once.
+void doublyList::mergeSorted(node *h1, node *h2, node *&h3)
+{
+    node *p = h1;
+    node *q = h2;
+
+    // both lists still have values: take the smaller one
+    while (p != NULL && q != NULL)
+    {
+        if (p->data < q->data)
+        {
+            insertEnd(h3, p->data);
+            p = p->next;
+        }
+        else if (q->data < p->data)
+        {
+            insertEnd(h3, q->data);
+            q = q->next;
+        }
+        else                // same value in both: insert it once
+        {
+            insertEnd(h3, p->data);
+            p = p->next;
+            q = q->next;
+        }
+    }
+
+    // copy what is left in the first list, then in the second list
+    while (p != NULL)
+    {
+        insertEnd(h3, p->data);
+        p = p->next;
+    }
+    while (q != NULL)
+    {
+        insertEnd(h3, q->data);
+        q = q->next;
+    }
+}
+
+// ---------- Doubly linked list menu ----------
+void doublyList::menu()
+{
+    int ch = 0, x = 0, k = 0, p = 0, q = 0;
+    if (num == 0)
+        num = 1;            // start with list 1 (empty)
+
+    do
+    {
+        cout << "\n--- DOUBLY LINKED LIST " << cur + 1 << " (of " << num << ") ---" << endl;
+        cout << "1. Insert" << endl;
+        cout << "2. Delete" << endl;
+        cout << "3. Search" << endl;
+        cout << "4. Reverse" << endl;
+        cout << "5. Count" << endl;
+        cout << "6. Display" << endl;
+        cout << "7. Display backward (last to first)" << endl;
+        cout << "8. Count occurrences of a value" << endl;
+        cout << "9. Largest, smallest, total, average" << endl;
+        cout << "10. Merge two sorted lists (adds 1 new list)" << endl;
+        cout << "11. Create a new list" << endl;
+        cout << "12. Select a list" << endl;
+        cout << "13. Show all lists" << endl;
+        cout << "0. Back to main menu" << endl;
+        cout << "Choice: ";
+        cin >> ch;
+
+        switch (ch)
+        {
+        case 1:
+            insert();
+            display();
+            break;
+
+        case 2:
+            del();
+            display();
+            break;
+
+        case 3:
+            search();
+            break;
+
+        case 4:
+            reverse();
+            display();
+            break;
+
+        case 5:
+            count();
+            break;
+
+        case 6:
+            display();
+            break;
+
+        case 7:
+            cout << "List " << cur + 1 << " backward: ";
+            displayBack(head[cur]);
+            break;
+
+        case 8:
+            cout << "Value: ";
+            cin >> x;
+            cout << x << " comes " << countOccur(head[cur], x) << " time(s)" << endl;
+            break;
+
+        case 9:
+            display();
+            maxMinTotal(head[cur]);
+            break;
+
+        case 10:
+        {
+            cout << "First sorted list (1 to " << num << "): ";
+            cin >> p;
+            cout << "Second sorted list (1 to " << num << "): ";
+            cin >> q;
+
+            // Check 1: both numbers must be lists that exist
+            if (p < 1 || p > num || q < 1 || q > num)
+            {
+                cout << "Wrong list number" << endl;
+                break;
+            }
+            // Check 2: the two lists must be different
+            if (p == q)
+            {
+                cout << "Choose two different lists" << endl;
+                break;
+            }
+            // Check 3: room for the result list
+            if (num + 1 > MAXS)
+            {
+                cout << "No room for another list" << endl;
+                break;
+            }
+            p--;                    // user numbers start at 1, the array at 0
+            q--;
+
+            int c = num;            // the result goes in a new list
+            head[c] = NULL;
+            mergeSorted(head[p], head[q], head[c]);
+            num++;
+
+            cout << "List " << p + 1 << ": ";
+            displayList(head[p]);
+            cout << "List " << q + 1 << ": ";
+            displayList(head[q]);
+            cout << "Merged (list " << c + 1 << "): ";
+            displayList(head[c]);
+            break;
+        }
+
+        case 11:
+            if (num >= MAXS)
+            {
+                cout << "No room for another list" << endl;
+                break;
+            }
+            head[num] = NULL;
+            cur = num;              // the new list becomes the selected one
+            num++;
+            cout << "List " << cur + 1 << " created and selected" << endl;
+            break;
+
+        case 12:
+            cout << "List number (1 to " << num << "): ";
+            cin >> k;
+            if (k < 1 || k > num)
+                cout << "Wrong list number" << endl;
+            else
+            {
+                cur = k - 1;
+                display();
+            }
+            break;
+
+        case 13:
+            for (int i = 0; i < num; i++)
+            {
+                cout << "List " << i + 1 << ": ";
+                displayList(head[i]);
+            }
             break;
 
         case 0:

@@ -145,6 +145,42 @@ struct singlyCircular : public ds
 };
 
 // =====================================================
+// 4. DOUBLY LINKED LIST: list i starts at head[i]
+// =====================================================
+struct doublyList : public ds
+{
+    node *head[MAXS] = {NULL};
+    int num = 0;        // how many lists exist
+    int cur = 0;        // index of the selected list
+
+    // ----- the 7 virtual functions -----
+    void insert();
+    void del();
+    void search();
+    void reverse();
+    void count();
+    void display();
+    void menu();
+
+    // ----- basic functions -----
+    void insertBeg(node *&h, int x);
+    void insertPos(node *&h, int pos, int x);
+    void insertEnd(node *&h, int x);
+    int delBeg(node *&h);
+    int delPos(node *&h, int pos);
+    int delEnd(node *&h);
+    int delValue(node *&h, int x);
+    int countList(node *h);
+    void displayList(node *h);
+    void displayBack(node *h);
+
+    // ----- extra questions -----
+    int countOccur(node *h, int x);
+    void maxMinTotal(node *h);
+    void mergeSorted(node *h1, node *h2, node *&h3);
+};
+
+// =====================================================
 // MAIN MENU: all[i] is a BASE pointer to one derived struct
 // =====================================================
 struct func
